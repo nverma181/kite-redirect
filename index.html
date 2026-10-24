@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Kite login redirect</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 32px 16px; background: #f7f7f8; color: #1f2328; }
+    main { max-width: 520px; margin: 0 auto; }
+    a { color: #0b57d0; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <main>
+    <p id="msg">Completing the Kite login&hellip;</p>
+    <p id="manual" hidden>If nothing happens, <a id="link" href="#">continue to the app</a>.</p>
+    <noscript><p>JavaScript is off. Copy the address of this page, change everything before
+      <code>?request_token</code> to <code>http://13.235.137.246:3000/redirect</code>, and open it.</p></noscript>
+  </main>
+  <script>
+    // Kite only accepts an https Redirect URL for a server address, and the app runs on plain http.
+    // This page is that https address: it forwards Kite's login result to the app's /redirect page.
+    // The destination is fixed here on purpose, so the page cannot be used to send anyone elsewhere.
+    var APP_REDIRECT = 'http://13.235.137.246:3000/redirect';
+    var KITE_PARAMS = ['request_token', 'action', 'status', 'type'];
+
+    function forwardUrl(search) {
+      var incoming = new URLSearchParams(search);
+      var outgoing = new URLSearchParams();
+      KITE_PARAMS.forEach(function (name) {
+        var value = incoming.get(name);
+        if (value !== null) outgoing.set(name, value);
+      });
+      var query = outgoing.toString();
+      return query ? APP_REDIRECT + '?' + query : APP_REDIRECT;
+    }
+
+    var target = forwardUrl(window.location.search);
+    if (!new URLSearchParams(window.location.search).get('request_token')) {
+      document.getElementById('msg').textContent = 'No login token arrived from Kite. Start the login again from the app.';
+    }
+    document.getElementById('link').href = target;
+    document.getElementById('manual').hidden = false;
+    // replace(): this page is not kept in the history, so Back does not replay the one-time token
+    window.location.replace(target);
+  </script>
+</body>
+</html>
